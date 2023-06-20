@@ -7,17 +7,6 @@ const productListElement = document.getElementsByClassName('product-list')[0];
 const addProductButton = document.getElementById('add-product-btn');
 let productCount = 0;
 
-const forms = document.getElementsByClassName('collapsible-form');
-
-for (let i = 0; i < forms.length; i++) {
-  forms[i].addEventListener('click', (event) => {
-    if (event.currentTarget === event.target) {
-      forms[i].classList.toggle('collapsed');
-    }
-  });
-}
-
-
 const postProduct = async (name, price) => {
   try {
     const response = await fetch('/products', {

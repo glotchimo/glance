@@ -145,12 +145,3 @@ button:hover {
 #create-invoice-btn {
   margin-top: 1rem;
 }
-
-.collapsible-form {
-  transition: width 0.2s ease;
-}
-
-.collapsed {
-  width: 1rem !important;
-  overflow: hidden;
-}
