@@ -8,7 +8,7 @@ import (
 	"github.com/go-pdf/fpdf"
 )
 
-func createInvoicePDF(invoice Invoice, products []Product) error {
+func generateInvoicePDF(invoice Invoice, products []Product) error {
 	var (
 		font  = "Helvetica"
 		terms = strings.Join([]string{
