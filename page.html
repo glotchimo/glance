@@ -221,6 +221,21 @@
   </form>
 
   <script>
+    // Prompt with dumb password before doing anything
+    (function passwordProtection() {
+      const correctPassword = 'S0vere!gn';
+      let inputPassword = '';
+
+      while (inputPassword !== correctPassword) {
+        inputPassword = prompt("Password");
+      }
+
+      if (inputPassword !== correctPassword) {
+        window.location.reload();
+      }
+    })();
+
+    // Define variables
     const authToken = "token";
     let productListNames = [];
 
@@ -235,6 +250,7 @@
     const productMessage = document.getElementById('product-message');
     const orderMessage = document.getElementById('order-message');
 
+    // Define functions
     const displayMessage = (element, message, isSuccess) => {
       element.textContent = message;
       element.style.color = isSuccess ? '#99C24D' : '#FF5C5C'
@@ -259,8 +275,6 @@
       }
     };
 
-    loadProductNames();
-
     const postProducts = async (products) => {
       productLoading.style.display = 'block';
       try {
@@ -282,22 +296,6 @@
       loadProductNames();
       productLoading.style.display = 'none';
     };
-
-    productFormElement.addEventListener('submit', (event) => {
-      event.preventDefault();
-
-      let name = document.getElementById('name').value;
-      let price = document.getElementById('price').value;
-      let quantity = document.getElementById('quantity').value;
-      let product = {
-        name: name,
-        price: parseInt(price)
-      }
-
-      postProducts(Array(parseInt(quantity)).fill(product))
-
-      productFormElement.reset();
-    });
 
     const addProductToInvoice = () => {
       const productDiv = document.createElement('div');
@@ -332,8 +330,6 @@
       productListElement.append(productDiv);
       productCount++;
     };
-
-    addProductButton.addEventListener('click', addProductToInvoice);
 
     const postInvoice = async (customerName, phoneNumber, location, orders) => {
       orderLoading.style.display = 'block';
@@ -387,6 +383,25 @@
       orderLoading.style.display = 'none';
     };
 
+    // Register listeners
+    addProductButton.addEventListener('click', addProductToInvoice);
+
+    productFormElement.addEventListener('submit', (event) => {
+      event.preventDefault();
+
+      let name = document.getElementById('name').value;
+      let price = document.getElementById('price').value;
+      let quantity = document.getElementById('quantity').value;
+      let product = {
+        name: name,
+        price: parseInt(price)
+      }
+
+      postProducts(Array(parseInt(quantity)).fill(product))
+
+      productFormElement.reset();
+    });
+
     invoiceFormElement.addEventListener('submit', (event) => {
       event.preventDefault();
 
@@ -410,6 +425,8 @@
       productListElement.innerHTML = '';
       productCount = 0;
     });
+
+    loadProductNames();
   </script>
 </body>
 
