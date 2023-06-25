@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -166,6 +167,8 @@ func TakeInvoice(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "error updating product", http.StatusBadRequest)
 				return
 			}
+
+			products = append(products, product)
 		}
 	}
 
@@ -176,7 +179,9 @@ func TakeInvoice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate invoice document from finalized numbers
-	if err := generateInvoicePDF(invoice, products); err != nil {
+	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="invoice.%d.pdf"`, invoice.ID))
+	if err := writeInvoicePDF(w, invoice, products); err != nil {
 		log.Println("error generating invoice document:", err.Error())
 		http.Error(w, "error generating invoice document", http.StatusInternalServerError)
 		return

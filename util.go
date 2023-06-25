@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"strings"
 	"time"
 
 	"github.com/go-pdf/fpdf"
 )
 
-func generateInvoicePDF(invoice Invoice, products []Product) error {
+func writeInvoicePDF(w io.Writer, invoice Invoice, products []Product) error {
 	var (
 		font  = "Helvetica"
 		terms = strings.Join([]string{
@@ -81,5 +82,5 @@ func generateInvoicePDF(invoice Invoice, products []Product) error {
 	pdf.Ln(10)
 	pdf.MultiCell(0, 8, terms, "", "", false)
 
-	return pdf.OutputFileAndClose("invoice.pdf")
+	return pdf.Output(w)
 }
