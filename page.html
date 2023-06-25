@@ -100,6 +100,10 @@
     }
 
     button {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
       padding: 1rem;
       background-color: #1664db;
       color: white;
@@ -150,6 +154,26 @@
     #create-invoice-btn {
       margin-top: 1rem;
     }
+
+    .loading {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #1664db;
+      border-radius: 50%;
+      width: 1rem;
+      height: 1rem;
+      animation: spin 2s linear infinite;
+      display: none;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
   </style>
 </head>
 
@@ -163,9 +187,12 @@
       <input type="number" id="quantity" placeholder="Quantity" min="1">
     </div>
 
-    <button type="submit">Add Product</button>
+    <button type="submit">
+      Add Product
+      <div id="product-loading" class="loading"></div>
+    </button>
+    <div id="product-message" class="message"></div>
   </form>
-
 
   <form id="order-form" class="collapsible-form">
     <h2>Create Invoice</h2>
@@ -178,6 +205,7 @@
       </div>
     </div>
 
+
     <div id="add-product-wrapper">
       <div class="form-section">
         <div class="product-list"></div>
@@ -185,7 +213,11 @@
       </div>
     </div>
 
-    <button type="submit" id="create-invoice-btn">Create Invoice</button>
+    <button type="submit" id="create-invoice-btn">
+      Create Invoice
+      <div id="order-loading" class="loading"></div>
+    </button>
+    <div id="order-message" class="message"></div>
   </form>
 
   <script>
@@ -197,6 +229,19 @@
     const productListElement = document.getElementsByClassName('product-list')[0];
     const addProductButton = document.getElementById('add-product-btn');
     let productCount = 0;
+
+    const productLoading = document.getElementById('product-loading');
+    const orderLoading = document.getElementById('order-loading');
+    const productMessage = document.getElementById('product-message');
+    const orderMessage = document.getElementById('order-message');
+
+    const displayMessage = (element, message, isSuccess) => {
+      element.textContent = message;
+      element.style.color = isSuccess ? '#99C24D' : '#FF5C5C'
+      setTimeout(() => {
+        element.textContent = '';
+      }, 3000);
+    };
 
     const loadProductNames = async () => {
       try {
@@ -217,6 +262,7 @@
     loadProductNames();
 
     const postProducts = async (products) => {
+      productLoading.style.display = 'block';
       try {
         const response = await fetch('/products/create', {
           method: 'POST',
@@ -227,11 +273,12 @@
           body: JSON.stringify(products)
         });
 
-        const data = await response.json();
-        console.log(data);
+        displayMessage(productMessage, 'Product added successfully', true);
       } catch (error) {
         console.error('Error:', error);
+        displayMessage(productMessage, 'Failed to add product', false);
       }
+      productLoading.style.display = 'none';
     };
 
     productFormElement.addEventListener('submit', (event) => {
@@ -240,7 +287,10 @@
       let name = document.getElementById('name').value;
       let price = document.getElementById('price').value;
       let quantity = document.getElementById('quantity').value;
-      let product = {name: name, price: parseInt(price)}
+      let product = {
+        name: name,
+        price: parseInt(price)
+      }
 
       postProducts(Array(parseInt(quantity)).fill(product))
 
@@ -271,7 +321,7 @@
       const removeProductButton = document.createElement('button');
       removeProductButton.innerText = 'Remove';
       removeProductButton.type = 'button';
-      removeProductButton.onclick = function () {
+      removeProductButton.onclick = function() {
         this.parentElement.remove();
       };
       removeProductButton.className = 'remove-product-btn';
@@ -284,6 +334,7 @@
     addProductButton.addEventListener('click', addProductToInvoice);
 
     const postInvoice = async (customerName, phoneNumber, location, orders) => {
+      orderLoading.style.display = 'block';
       try {
         const response = await fetch('/invoices', {
           method: 'POST',
@@ -301,11 +352,35 @@
           })
         });
 
-        const data = await response.json();
-        console.log(data);
+        const blob = await response.blob();
+
+        let filename = 'invoice.pdf';
+        const contentDisposition = response.headers.get('Content-Disposition');
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename="(.+)"/i);
+          if (filenameMatch && filenameMatch[1]) {
+            filename = filenameMatch[1];
+          }
+        }
+
+        const blobUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = filename;
+        const event = new MouseEvent('click', {
+          view: window,
+          bubbles: true,
+          cancelable: true
+        });
+
+        link.dispatchEvent(event);
+
+        displayMessage(orderMessage, 'Invoice created successfully', true);
       } catch (error) {
         console.error('Error:', error);
+        displayMessage(orderMessage, 'Failed to create invoice', false);
       }
+      orderLoading.style.display = 'none';
     };
 
     invoiceFormElement.addEventListener('submit', (event) => {
@@ -319,7 +394,10 @@
       const orders = Array.from(productDivs).map(productContainer => {
         const name = productContainer.querySelector('select').value;
         const quantity = productContainer.querySelector('input').value;
-        return {name: name, quantity: parseInt(quantity)};
+        return {
+          name: name,
+          quantity: parseInt(quantity)
+        };
       });
 
       postInvoice(customerName, phoneNumber, location, orders);
