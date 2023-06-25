@@ -31,7 +31,7 @@ func writeInvoicePDF(w io.Writer, invoice Invoice, products []Product) error {
 
 	// Add table header
 	pdf.SetFont(font, "B", 13)
-	pdf.Cell(40, 10, "Item Name")
+	pdf.Cell(90, 10, "Item Name")
 	pdf.Cell(40, 10, "Quantity")
 	pdf.Cell(40, 10, "Price")
 	pdf.Cell(40, 10, "Total")
@@ -49,7 +49,7 @@ func writeInvoicePDF(w io.Writer, invoice Invoice, products []Product) error {
 	var total int
 	pdf.SetFont(font, "", 12)
 	for name, product := range mapped {
-		pdf.CellFormat(40, 10, product.Name, "", 0, "L", false, 0, "")
+		pdf.CellFormat(90, 10, product.Name, "", 0, "L", false, 0, "")
 		pdf.CellFormat(40, 10, fmt.Sprint(quantities[name]), "", 0, "L", false, 0, "")
 		pdf.CellFormat(40, 10, fmt.Sprint(product.Price), "", 0, "L", false, 0, "")
 		pdf.CellFormat(40, 10, fmt.Sprint(quantities[name]*product.Price), "", 0, "L", false, 0, "")
@@ -60,7 +60,7 @@ func writeInvoicePDF(w io.Writer, invoice Invoice, products []Product) error {
 
 	// Add total row
 	pdf.SetFont(font, "B", 12)
-	pdf.CellFormat(120, 10, "Total: ", "", 0, "R", false, 0, "")
+	pdf.CellFormat(170, 10, "Total: ", "", 0, "R", false, 0, "")
 	pdf.SetFont(font, "", 12)
 	pdf.CellFormat(40, 10, fmt.Sprint(total), "", 0, "L", false, 0, "")
 	pdf.Ln(20)
