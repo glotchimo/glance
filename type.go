@@ -66,6 +66,7 @@ func (i *Invoice) Create() error {
 type Product struct {
 	ID        int    `json:"id"`
 	Name      string `json:"name"`
+	Category  string `json:"category"`
 	Price     int    `json:"price"`
 	InvoiceID int    `json:"invoice_id"`
 }
@@ -73,6 +74,7 @@ type Product struct {
 func (p Product) Map() map[string]any {
 	return map[string]any{
 		"name":       p.Name,
+		"category":   p.Category,
 		"price":      p.Price,
 		"invoice_id": p.InvoiceID,
 	}
@@ -80,7 +82,7 @@ func (p Product) Map() map[string]any {
 
 func (p *Product) Read(id int) error {
 	stmt := goqu.Dialect("postgres").
-		Select("id", "name", "price", "invoice_id").
+		Select("id", "name", "category", "price", "invoice_id").
 		From("products").
 		Where(goqu.I("id").Eq(id))
 	q, args, err := stmt.ToSQL()
@@ -88,7 +90,7 @@ func (p *Product) Read(id int) error {
 		return fmt.Errorf("error building query: %w", err)
 	}
 
-	if err := DB.QueryRow(q, args...).Scan(&p.ID, &p.Name, &p.Price, &p.InvoiceID); err != nil {
+	if err := DB.QueryRow(q, args...).Scan(&p.ID, &p.Name, &p.Category, &p.Price, &p.InvoiceID); err != nil {
 		return fmt.Errorf("error executing query: %w", err)
 	}
 
@@ -97,7 +99,7 @@ func (p *Product) Read(id int) error {
 
 func (p *Product) ReadOne(name string) error {
 	stmt := goqu.Dialect("postgres").
-		Select("id", "name", "price").
+		Select("id", "name", "category", "price").
 		From("products").
 		Where(goqu.And(
 			goqu.I("name").Eq(name)),
@@ -109,7 +111,7 @@ func (p *Product) ReadOne(name string) error {
 		return fmt.Errorf("error building query: %w", err)
 	}
 
-	if err := DB.QueryRow(q, args...).Scan(&p.ID, &p.Name, &p.Price); err != nil {
+	if err := DB.QueryRow(q, args...).Scan(&p.ID, &p.Name, &p.Category, &p.Price); err != nil {
 		return fmt.Errorf("error executing query: %w", err)
 	}
 
@@ -119,7 +121,7 @@ func (p *Product) ReadOne(name string) error {
 func (p *Product) Create() error {
 	stmt := goqu.Dialect("products").
 		Insert("products").
-		Rows(goqu.Record{"name": p.Name, "price": p.Price}).
+		Rows(goqu.Record{"name": p.Name, "category": p.Category, "price": p.Price}).
 		Returning("id")
 	q, args, err := stmt.ToSQL()
 	if err != nil {

@@ -181,7 +181,10 @@
   <form id="product-form" class="collapsible-form">
     <h2>Add Product</h2>
 
-    <input type="text" id="name" placeholder="Product Name">
+    <div id="row-wrapper">
+      <input type="text" id="name" placeholder="Product Name">
+      <input type="text" id="category" placeholder="Product Category">
+    </div>
     <div id="row-wrapper">
       <input type="number" id="price" placeholder="Unit Price">
       <input type="number" id="quantity" placeholder="Quantity" min="1">
@@ -376,10 +379,12 @@
       event.preventDefault();
 
       let name = document.getElementById('name').value;
+      let category = document.getElementById('category').value;
       let price = document.getElementById('price').value;
       let quantity = document.getElementById('quantity').value;
       let product = {
         name: name,
+        category: category,
         price: parseInt(price)
       }
 
