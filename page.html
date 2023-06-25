@@ -278,6 +278,8 @@
         console.error('Error:', error);
         displayMessage(productMessage, 'Failed to add product', false);
       }
+
+      loadProductNames();
       productLoading.style.display = 'none';
     };
 
@@ -380,6 +382,8 @@
         console.error('Error:', error);
         displayMessage(orderMessage, 'Failed to create invoice', false);
       }
+
+      loadProductNames();
       orderLoading.style.display = 'none';
     };
 
