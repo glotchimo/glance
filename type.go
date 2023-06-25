@@ -119,7 +119,7 @@ func (p *Product) ReadOne(name string) error {
 func (p *Product) Create() error {
 	stmt := goqu.Dialect("products").
 		Insert("products").
-		Rows(p.Map()).
+		Rows(goqu.Record{"name": p.Name, "price": p.Price}).
 		Returning("id")
 	q, args, err := stmt.ToSQL()
 	if err != nil {
@@ -136,7 +136,7 @@ func (p *Product) Create() error {
 func (p *Product) Update() error {
 	stmt := goqu.Dialect("products").
 		Update("products").
-		Set(p.Map()).
+		Set(goqu.Record{"invoice_id": p.InvoiceID}).
 		Where(goqu.I("id").Eq(p.ID))
 	q, args, err := stmt.ToSQL()
 	if err != nil {
