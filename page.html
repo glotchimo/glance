@@ -221,20 +221,6 @@
   </form>
 
   <script>
-    // Prompt with dumb password before doing anything
-    (function passwordProtection() {
-      const correctPassword = 'S0vere!gn';
-      let inputPassword = '';
-
-      while (inputPassword !== correctPassword) {
-        inputPassword = prompt("Password");
-      }
-
-      if (inputPassword !== correctPassword) {
-        window.location.reload();
-      }
-    })();
-
     // Define variables
     const authToken = "token";
     let productListNames = [];
@@ -321,7 +307,7 @@
       const removeProductButton = document.createElement('button');
       removeProductButton.innerText = 'Remove';
       removeProductButton.type = 'button';
-      removeProductButton.onclick = function() {
+      removeProductButton.onclick = function () {
         this.parentElement.remove();
       };
       removeProductButton.className = 'remove-product-btn';

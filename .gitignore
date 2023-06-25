@@ -3,3 +3,5 @@ invoice.pdf
 conf.yml
 psql.crt
 .DS_Store
+.data
+.nova
