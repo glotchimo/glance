@@ -9,7 +9,15 @@ import (
 	"github.com/doug-martin/goqu/v9"
 )
 
-func serve(ch chan error) {
+type Request struct {
+	Invoice Invoice `json:"invoice"`
+	Orders  []struct {
+		Name     string `json:"name"`
+		Quantity int    `json:"quantity"`
+	} `json:"orders"`
+}
+
+func Serve(ch chan error) {
 	log.Printf("starting HTTP server on port %s\n", PORT)
 
 	http.HandleFunc("/", SendIndex)
@@ -114,7 +122,7 @@ func TakeInvoice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var data InvoiceRequest
+	var data Request
 	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
 		log.Println("error decoding request body:", err.Error())
 		http.Error(w, "error decoding request body", http.StatusBadRequest)

@@ -38,6 +38,7 @@ func init() {
 }
 
 func main() {
+	// Open database connection
 	log.Println("connecting to database")
 	db, err := sql.Open("postgres", CONF.Database.DSN())
 	if err != nil {
@@ -46,8 +47,9 @@ func main() {
 	defer db.Close()
 	DB = db
 
+	// Start server and watch for interrupts
 	errs := make(chan error)
-	go serve(errs)
+	go Serve(errs)
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt)
 	for {
