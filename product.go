@@ -23,7 +23,7 @@ func (p Product) Map() map[string]any {
 	}
 }
 
-func (p *Product) Create() error {
+func PutProduct(p Product) error {
 	stmt := goqu.Dialect("products").
 		Insert("products").
 		Rows(goqu.Record{"name": p.Name, "category": p.Category, "price": p.Price}).
@@ -40,24 +40,28 @@ func (p *Product) Create() error {
 	return nil
 }
 
-func (p *Product) Read(id int) error {
+func GetProduct(id int) (Product, error) {
+	var p Product
+
 	stmt := goqu.Dialect("postgres").
 		Select("id", "name", "category", "price", "invoice_id").
 		From("products").
 		Where(goqu.I("id").Eq(id))
 	q, args, err := stmt.ToSQL()
 	if err != nil {
-		return fmt.Errorf("error building query: %w", err)
+		return p, fmt.Errorf("error building query: %w", err)
 	}
 
 	if err := DB.QueryRow(q, args...).Scan(&p.ID, &p.Name, &p.Category, &p.Price, &p.InvoiceID); err != nil {
-		return fmt.Errorf("error executing query: %w", err)
+		return p, fmt.Errorf("error executing query: %w", err)
 	}
 
-	return nil
+	return p, nil
 }
 
-func (p *Product) ReadOne(name string) error {
+func ReadOneProduct(name string) (Product, error) {
+	var p Product
+
 	stmt := goqu.Dialect("postgres").
 		Select("id", "name", "category", "price").
 		From("products").
@@ -68,17 +72,17 @@ func (p *Product) ReadOne(name string) error {
 		Limit(1)
 	q, args, err := stmt.ToSQL()
 	if err != nil {
-		return fmt.Errorf("error building query: %w", err)
+		return p, fmt.Errorf("error building query: %w", err)
 	}
 
 	if err := DB.QueryRow(q, args...).Scan(&p.ID, &p.Name, &p.Category, &p.Price); err != nil {
-		return fmt.Errorf("error executing query: %w", err)
+		return p, fmt.Errorf("error executing query: %w", err)
 	}
 
-	return nil
+	return p, nil
 }
 
-func (p *Product) Update() error {
+func UpdateProduct(p Product) error {
 	stmt := goqu.Dialect("products").
 		Update("products").
 		Set(goqu.Record{"invoice_id": p.InvoiceID}).

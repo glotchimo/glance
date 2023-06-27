@@ -106,7 +106,7 @@ func TakeProducts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, product := range products {
-		if err := product.Create(); err != nil {
+		if err := PutProduct(product); err != nil {
 			log.Println("error storing product:", err.Error())
 			http.Error(w, "error storing product", http.StatusInternalServerError)
 			return
@@ -160,8 +160,8 @@ func TakeInvoice(w http.ResponseWriter, r *http.Request) {
 	var products []Product
 	for _, order := range data.Orders {
 		for i := 0; i < order.Quantity; i++ {
-			var product Product
-			if err := product.ReadOne(order.Name); err != nil {
+			product, err := ReadOneProduct(order.Name)
+			if err != nil {
 				tx.Rollback()
 				log.Println("error getting product:", err.Error())
 				http.Error(w, "error getting product", http.StatusBadRequest)
@@ -169,7 +169,7 @@ func TakeInvoice(w http.ResponseWriter, r *http.Request) {
 			}
 
 			product.InvoiceID = invoice.ID
-			if err := product.Update(); err != nil {
+			if err := UpdateProduct(product); err != nil {
 				tx.Rollback()
 				log.Println("error updating product:", err.Error())
 				http.Error(w, "error updating product", http.StatusBadRequest)
