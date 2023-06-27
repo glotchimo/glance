@@ -26,6 +26,10 @@ var (
 )
 
 func init() {
+	log.Println("parsing templates")
+	INDEX_TMPL = template.Must(template.New("index").Parse(INDEX_HTML))
+
+	log.Println("loading configuration")
 	flag.StringVar(&PATH, "conf", "~/.config/glean/conf.yml", "Path to configuration")
 	flag.StringVar(&PORT, "port", "8080", "Port to listen on")
 	flag.Parse()
@@ -34,24 +38,23 @@ func init() {
 		log.Fatal(err)
 	}
 
-	INDEX_TMPL = template.Must(template.New("index").Parse(INDEX_HTML))
-}
-
-func main() {
-	// Open database connection
 	log.Println("connecting to database")
-	db, err := sql.Open("postgres", CONF.Database.DSN())
+	var err error
+	DB, err = sql.Open("postgres", CONF.Database.DSN())
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer db.Close()
-	DB = db
+}
 
-	// Start server and watch for interrupts
+func main() {
+	defer DB.Close()
+
 	errs := make(chan error)
 	go Serve(errs)
+
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt)
+
 	for {
 		select {
 		case err := <-errs:
