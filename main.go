@@ -40,7 +40,7 @@ func init() {
 
 	log.Println("connecting to database")
 	var err error
-	DB, err = sql.Open("postgres", CONF.Database.DSN())
+	DB, err = sql.Open("postgres", CONF.DBConf.DSN())
 	if err != nil {
 		log.Fatal(err)
 	}

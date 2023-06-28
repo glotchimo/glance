@@ -11,12 +11,8 @@ import (
 
 func writeInvoicePDF(w io.Writer, invoice Invoice, products []Product) error {
 	var (
-		font  = "Helvetica"
-		terms = strings.Join([]string{
-			"1. All purchases are final.",
-			"2. Warranty claims must be made within 30 days of purchase.",
-			"3. Returns are subject to a 20% restocking fee.",
-		}, "\n")
+		font  = CONF.InvoiceConf.Font
+		terms = strings.Join(CONF.InvoiceConf.Terms, "\n")
 	)
 
 	pdf := fpdf.New("P", "mm", "A4", "")
@@ -26,7 +22,7 @@ func writeInvoicePDF(w io.Writer, invoice Invoice, products []Product) error {
 	pdf.SetFont(font, "B", 16)
 	pdf.Cell(140, 10, "Invoice")
 	pdf.SetFont(font, "", 14)
-	pdf.Cell(40, 10, "Sovereign Fireworks")
+	pdf.Cell(40, 10, CONF.InvoiceConf.Title)
 	pdf.Ln(20)
 
 	// Add table header

@@ -7,7 +7,13 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type Database struct {
+type InvoiceConf struct {
+	Title string   `yaml:"title"`
+	Font  string   `yaml:"font"`
+	Terms []string `yaml:"terms"`
+}
+
+type DBConf struct {
 	Host     string `yaml:"host"`
 	Port     int    `yaml:"port"`
 	User     string `yaml:"user"`
@@ -17,20 +23,21 @@ type Database struct {
 	SSLCert  string `yaml:"sslcert"`
 }
 
-func (d Database) DSN() string {
+func (d DBConf) DSN() string {
 	return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s sslrootcert=%s",
-		CONF.Database.Host,
-		CONF.Database.Port,
-		CONF.Database.User,
-		CONF.Database.Password,
-		CONF.Database.Database,
-		CONF.Database.SSLMode,
-		CONF.Database.SSLCert,
+		CONF.DBConf.Host,
+		CONF.DBConf.Port,
+		CONF.DBConf.User,
+		CONF.DBConf.Password,
+		CONF.DBConf.Database,
+		CONF.DBConf.SSLMode,
+		CONF.DBConf.SSLCert,
 	)
 }
 
 type Conf struct {
-	Database Database `yaml:"db"`
+	InvoiceConf `yaml:"invoice"`
+	DBConf      DBConf `yaml:"db"`
 }
 
 func LoadConf() error {
