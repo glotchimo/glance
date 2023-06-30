@@ -5,3 +5,5 @@ psql.crt
 .DS_Store
 .data
 .nova
+
+dist/
