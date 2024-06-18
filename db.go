@@ -27,7 +27,7 @@ const (
 
 	INVOICE_PRODUCTS_TBL = `CREATE TABLE IF NOT EXISTS invoice_products (
 		invoice_id TEXT REFERENCES invoices(id),
-		product_id TEXT REFERENCES products(name)
+		product_name TEXT REFERENCES products(name)
 	)`
 )
 
@@ -36,7 +36,7 @@ type Store struct {
 	builder sq.StatementBuilderType
 }
 
-func NewStore(dsn string) (*Store, error) {
+func newStore(dsn string) (*Store, error) {
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("error opening database connection: %w", err)
@@ -60,11 +60,22 @@ func NewStore(dsn string) (*Store, error) {
 	return &store, nil
 }
 
+func (s Store) getProduct(name string) (Product, error) {
+	var product Product
+
+	q := s.builder.Select("name", "category", "package", "price", "retail").From("products").Where(sq.Eq{"name": name})
+	if err := q.QueryRow().Scan(&product.Name, &product.Category, &product.Package, &product.Price, &product.Retail); err != nil {
+		return product, fmt.Errorf("error scanning product: %w", err)
+	}
+
+	return product, nil
+}
+
 func (s Store) listProducts() ([]Product, error) {
-	q := s.builder.Select("name", "category", "package", "price", "retail")
+	q := s.builder.Select("name", "category", "package", "price", "retail").From("products")
 	rows, err := q.Query()
 	if err != nil {
-		return nil, fmt.Errorf("error getting products")
+		return nil, fmt.Errorf("error getting products: %w", err)
 	}
 	defer rows.Close()
 
@@ -85,8 +96,11 @@ func (s Store) listProducts() ([]Product, error) {
 }
 
 type createInvoiceIn struct {
-	Invoice  Invoice
-	Products []Product
+	Invoice
+	Products []struct {
+		Name     string
+		Quantity int
+	}
 }
 
 func (s Store) createInvoice(in createInvoiceIn) error {
@@ -108,10 +122,12 @@ func (s Store) createInvoice(in createInvoiceIn) error {
 	}
 
 	for _, p := range in.Products {
-		stmt = sq.Insert("invoice_products").SetMap(map[string]any{"invoice_id": in.Invoice.ID, "product_id": p.Name})
-		q, args, err = stmt.ToSql()
-		if err != nil {
-			return fmt.Errorf("error building invoice_product insertion query: %w", err)
+		for range p.Quantity {
+			stmt = sq.Insert("invoice_products").SetMap(map[string]any{"invoice_id": in.Invoice.ID, "product_id": p.Name})
+			q, args, err = stmt.ToSql()
+			if err != nil {
+				return fmt.Errorf("error building invoice_product insertion query: %w", err)
+			}
 		}
 	}
 
