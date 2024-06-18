@@ -24,8 +24,8 @@ func (i Invoice) Map() map[string]any {
 	}
 }
 
-func (i Invoice) Write(products []Product, w io.Writer) error {
-	font := "sans"
+func (i Invoice) Write(w io.Writer, products []Product) error {
+	font := "Arial"
 
 	pdf := fpdf.New("P", "mm", "A4", "")
 	pdf.AddPage()
