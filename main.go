@@ -3,10 +3,10 @@ package main
 import (
 	"embed"
 	"encoding/json"
-	"fmt"
 	"io/fs"
 	"log"
 	"net/http"
+	"os"
 )
 
 var (
@@ -17,7 +17,7 @@ var (
 	distFS  fs.FS
 	indexFS fs.FS
 
-	store Store
+	store *Store
 )
 
 func init() {
@@ -32,12 +32,19 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	store, err = newStore(os.Getenv("DATABASE_URL"))
+	if err != nil {
+		panic(err)
+	}
 }
 
 func productsHandler(w http.ResponseWriter, r *http.Request) {
 	products, err := store.listProducts()
 	if err != nil {
-
+		log.Print(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -45,13 +52,32 @@ func productsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func invoicesHandler(w http.ResponseWriter, r *http.Request) {
-	var invoice Invoice
-	if err := json.NewDecoder(r.Body).Decode(&invoice); err != nil {
+	var in createInvoiceIn
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	http.ServeFile(w, r, "invoice.pdf")
+	invoice := in.Invoice
+	products := []Product{}
+	for _, p := range in.Products {
+		product, err := store.getProduct(p.Name)
+		if err != nil {
+			log.Print(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		for range p.Quantity {
+			products = append(products, product)
+		}
+	}
+
+	if err := invoice.Write(w, products); err != nil {
+		log.Print(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func main() {
@@ -60,6 +86,6 @@ func main() {
 	http.Handle("/", http.FileServerFS(distFS))
 	http.Handle("/index.html", http.FileServerFS(indexFS))
 
-	fmt.Println("Server is running on port 8080")
+	log.Println("Server is running on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
