@@ -1,67 +1,65 @@
 package main
 
 import (
-	"database/sql"
-	_ "embed"
-	"flag"
+	"embed"
+	"encoding/json"
+	"fmt"
+	"io/fs"
 	"log"
-	"os"
-	"os/signal"
-	"text/template"
-
-	_ "github.com/lib/pq"
+	"net/http"
 )
 
 var (
-	PATH string
-	PORT string
+	//go:embed web/dist
+	dist embed.FS
+	//go:embed web/dist/index.html
+	index   embed.FS
+	distFS  fs.FS
+	indexFS fs.FS
 
-	CONF Conf
-
-	DB *sql.DB
-
-	//go:embed page.html
-	INDEX_HTML string
-	INDEX_TMPL *template.Template
+	store Store
 )
 
 func init() {
-	log.Println("parsing templates")
-	INDEX_TMPL = template.Must(template.New("index").Parse(INDEX_HTML))
+	var err error
 
-	log.Println("loading configuration")
-	flag.StringVar(&PATH, "conf", "~/.config/glean/conf.yml", "Path to configuration")
-	flag.StringVar(&PORT, "port", "8080", "Port to listen on")
-	flag.Parse()
-
-	if err := LoadConf(); err != nil {
-		log.Fatal(err)
+	distFS, err = fs.Sub(dist, "web/dist")
+	if err != nil {
+		panic(err)
 	}
 
-	log.Println("connecting to database")
-	var err error
-	DB, err = sql.Open("postgres", CONF.DBConf.DSN())
+	indexFS, err = fs.Sub(dist, "web/dist/index.html")
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 }
 
-func main() {
-	defer DB.Close()
+func productsHandler(w http.ResponseWriter, r *http.Request) {
+	products, err := store.listProducts()
+	if err != nil {
 
-	errs := make(chan error)
-	go Serve(errs)
-
-	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, os.Interrupt)
-
-	for {
-		select {
-		case err := <-errs:
-			log.Fatalf("error in server: %s\n", err.Error())
-		case sig := <-signals:
-			log.Printf("received %s signal, shutting down...\n", sig.String())
-			os.Exit(0)
-		}
 	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(products)
+}
+
+func invoicesHandler(w http.ResponseWriter, r *http.Request) {
+	var invoice Invoice
+	if err := json.NewDecoder(r.Body).Decode(&invoice); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	http.ServeFile(w, r, "invoice.pdf")
+}
+
+func main() {
+	http.HandleFunc("/products", productsHandler)
+	http.HandleFunc("/invoices", invoicesHandler)
+	http.Handle("/", http.FileServerFS(distFS))
+	http.Handle("/index.html", http.FileServerFS(indexFS))
+
+	fmt.Println("Server is running on port 8080")
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
