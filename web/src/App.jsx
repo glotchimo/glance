@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { TextField, Button, Container, Typography, Autocomplete, Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
-import { Add, Delete } from '@mui/icons-material';
+import { TextField, Button, Container, Grid, Table, TableBody, TableCell, TableContainer, TableRow, IconButton, Autocomplete } from '@mui/material';
+import { Add, Delete, FileDownload } from '@mui/icons-material';
 
 function App() {
   const [name, setName] = useState('');
@@ -8,6 +8,7 @@ function App() {
   const [phone, setPhone] = useState('');
   const [products, setProducts] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
+  const [totalCost, setTotalCost] = useState(0);
 
   useEffect(() => {
     fetch('/products')
@@ -15,6 +16,14 @@ function App() {
       .then(data => setProducts(data))
       .catch(error => console.error('Error fetching products:', error));
   }, []);
+
+  useEffect(() => {
+    const cost = selectedProducts.reduce((acc, product) => {
+      const productDetails = products.find(p => p.name === product.name);
+      return acc + (productDetails ? productDetails.price * product.quantity : 0);
+    }, 0);
+    setTotalCost(cost);
+  }, [selectedProducts, products]);
 
   const handleAddProduct = () => {
     setSelectedProducts([...selectedProducts, { name: '', quantity: 1 }]);
@@ -60,9 +69,6 @@ function App() {
 
   return (
     <Container>
-      <Typography variant="h4" gutterBottom>
-        Invoice Generator
-      </Typography>
       <Grid container spacing={2} alignItems="center">
         <Grid item xs={12}>
           <TextField label="Name" fullWidth margin="normal" value={name} onChange={e => setName(e.target.value)} />
@@ -74,44 +80,59 @@ function App() {
           <TextField label="Phone" fullWidth margin="normal" value={phone} onChange={e => setPhone(e.target.value)} />
         </Grid>
       </Grid>
-      <Button variant="contained" color="primary" fullWidth startIcon={<Add />} sx={{ marginTop: 2 }} onClick={handleAddProduct}>
-        Add Product
-      </Button>
       <TableContainer sx={{ marginTop: 2 }}>
         <Table>
           <TableBody>
             {selectedProducts.map((product, index) => (
               <TableRow key={index}>
                 <TableCell>
-                  <Autocomplete
-                    options={products}
-                    getOptionLabel={option => option.name}
-                    value={products.find(p => p.name === product.name) || null}
-                    onChange={(_, newValue) => handleProductChange(index, newValue)}
-                    renderInput={params => <TextField {...params} />}
-                    fullWidth
-                  />
-                </TableCell>
-                <TableCell align="right">
-                  <TextField
-                    type="number"
-                    value={product.quantity}
-                    onChange={e => handleQuantityChange(index, parseInt(e.target.value))}
-                  />
-                </TableCell>
-                <TableCell align="right">
-                  <IconButton onClick={() => handleRemoveProduct(index)}>
-                    <Delete />
-                  </IconButton>
+                  <Grid container spacing={2} alignItems="center">
+                    <Grid item xs={9}>
+                      <Autocomplete
+                        options={products}
+                        getOptionLabel={option => `${option.name} ($${option.price})`}
+                        value={products.find(p => p.name === product.name) || null}
+                        onChange={(_, newValue) => handleProductChange(index, newValue)}
+                        renderInput={params => <TextField {...params} fullWidth />}
+                      />
+                    </Grid>
+                    <Grid item xs={2}>
+                      <TextField
+                        type="number"
+                        value={product.quantity}
+                        onChange={e => handleQuantityChange(index, parseInt(e.target.value))}
+                        fullWidth
+                      />
+                    </Grid>
+                    <Grid item xs={1}>
+                      <IconButton onClick={() => handleRemoveProduct(index)}>
+                        <Delete />
+                      </IconButton>
+                    </Grid>
+                  </Grid>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
-      <Button variant="contained" color="primary" fullWidth sx={{ marginTop: 2 }} onClick={handleSubmit}>
-        Generate Invoice
-      </Button>
+      <Grid container spacing={2} alignItems="center" sx={{ marginTop: 2 }}>
+        <Grid item xs={12}>
+          <Button variant="contained" color="primary" fullWidth startIcon={<Add />} onClick={handleAddProduct}>
+            Add Product
+          </Button>
+        </Grid>
+        <Grid item xs={12}>
+          <Button variant="contained" color="primary" fullWidth disabled>
+            Total Cost: ${totalCost.toFixed(2)}
+          </Button>
+        </Grid>
+        <Grid item xs={12}>
+          <Button variant="contained" color="primary" fullWidth startIcon={<FileDownload />} onClick={handleSubmit}>
+            Generate Invoice
+          </Button>
+        </Grid>
+      </Grid>
     </Container>
   );
 }
