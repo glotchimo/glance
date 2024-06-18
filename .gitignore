@@ -1,9 +1,2 @@
 glance
-invoice.pdf
-conf.yml
-psql.crt
-.DS_Store
-.data
-.nova
-
-dist/
+web/node_modules
