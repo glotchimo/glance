@@ -39,7 +39,9 @@ func init() {
 	}
 }
 
-func productsHandler(w http.ResponseWriter, r *http.Request) {
+func handleListProducts(w http.ResponseWriter, r *http.Request) {
+	log.Printf("%s %s %s", r.Method, r.URL.Path, r.RemoteAddr)
+
 	products, err := store.listProducts()
 	if err != nil {
 		log.Print(err)
@@ -51,7 +53,9 @@ func productsHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(products)
 }
 
-func invoicesHandler(w http.ResponseWriter, r *http.Request) {
+func handleCreateInvoice(w http.ResponseWriter, r *http.Request) {
+	log.Printf("%s %s %s", r.Method, r.URL.Path, r.RemoteAddr)
+
 	var in createInvoiceIn
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -81,8 +85,8 @@ func invoicesHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/products", productsHandler)
-	http.HandleFunc("/invoices", invoicesHandler)
+	http.HandleFunc("/products", handleListProducts)
+	http.HandleFunc("/invoices", handleCreateInvoice)
 	http.Handle("/", http.FileServerFS(distFS))
 	http.Handle("/index.html", http.FileServerFS(indexFS))
 
