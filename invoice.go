@@ -32,7 +32,7 @@ func (i Invoice) Write(w io.Writer, products []Product) error {
 
 	// Add document header
 	pdf.SetFont(font, "B", 16)
-	pdf.Cell(140, 10, "Invoice")
+	pdf.Cell(140, 10, "Sovereign Fireworks / Invoice")
 	pdf.SetFont(font, "", 14)
 	pdf.Cell(40, 10, i.Name)
 	pdf.Ln(20)
@@ -74,9 +74,16 @@ func (i Invoice) Write(w io.Writer, products []Product) error {
 	pdf.Ln(20)
 
 	// Add timestamp
+	pst, _ := time.LoadLocation("America/Los_Angeles")
+	now := time.Now().In(pst)
 	pdf.SetFont(font, "I", 10)
-	pdf.Cell(97, 10, "Invoice generated at "+time.Now().Format("3:04 PM on January 2, 2006"))
+	pdf.Cell(97, 10, "Invoice generated at "+now.Format("3:04 PM on January 2, 2006 (PST)"))
 	pdf.SetFont(font, "", 12)
+
+	// Add signature
+	pdf.Cell(21, 10, "Signature: ")
+	pdf.Line(pdf.GetX()+3, pdf.GetY()+7, pdf.GetX()+67, pdf.GetY()+7)
+	pdf.Ln(20)
 
 	return pdf.Output(w)
 }
