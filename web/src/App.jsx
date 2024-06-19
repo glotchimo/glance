@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TextField, Button, Container, Grid, Table, TableBody, TableCell, TableContainer, TableRow, IconButton, Autocomplete } from '@mui/material';
-import { Add, Delete, FileDownload } from '@mui/icons-material';
+import { Add, Delete, FileDownload, Clear } from '@mui/icons-material';
 
 function App() {
   const [name, setName] = useState('');
@@ -10,13 +10,31 @@ function App() {
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [totalCost, setTotalCost] = useState(0);
 
+  // Load data from localStorage
+  useEffect(() => {
+    const storedName = localStorage.getItem('name');
+    const storedEmail = localStorage.getItem('email');
+    const storedPhone = localStorage.getItem('phone');
+    const storedSelectedProducts = localStorage.getItem('selectedProducts');
+
+    if (storedName) setName(storedName);
+    if (storedEmail) setEmail(storedEmail);
+    if (storedPhone) setPhone(storedPhone);
+    if (storedSelectedProducts) setSelectedProducts(JSON.parse(storedSelectedProducts) || []);
+  }, []);
+
+  // Fetch products
   useEffect(() => {
     fetch('/products')
       .then(response => response.json())
-      .then(data => setProducts(data))
+      .then(data => {
+        console.log(data)
+        setProducts(data)
+      })
       .catch(error => console.error('Error fetching products:', error));
   }, []);
 
+  // Calculate total cost
   useEffect(() => {
     const cost = selectedProducts.reduce((acc, product) => {
       const productDetails = products.find(p => p.name === product.name);
@@ -24,6 +42,14 @@ function App() {
     }, 0);
     setTotalCost(cost);
   }, [selectedProducts, products]);
+
+  // Persist data to localStorage
+  useEffect(() => {
+    localStorage.setItem('name', name);
+    localStorage.setItem('email', email);
+    localStorage.setItem('phone', phone);
+    localStorage.setItem('selectedProducts', JSON.stringify(selectedProducts));
+  }, [name, email, phone, selectedProducts]);
 
   const handleAddProduct = () => {
     setSelectedProducts([...selectedProducts, { name: '', quantity: 1 }]);
@@ -34,7 +60,9 @@ function App() {
   };
 
   const handleProductChange = (index, product) => {
-    setSelectedProducts(selectedProducts.map((p, i) => (i === index ? { ...p, name: product.name } : p)));
+    if (product) {
+      setSelectedProducts(selectedProducts.map((p, i) => (i === index ? { ...p, name: product.name } : p)));
+    }
   };
 
   const handleQuantityChange = (index, quantity) => {
@@ -65,6 +93,18 @@ function App() {
         link.click();
       })
       .catch(error => console.error('Error generating invoice:', error));
+  };
+
+  const handleClearForm = () => {
+    setName('');
+    setEmail('');
+    setPhone('');
+    setSelectedProducts([]);
+    setTotalCost(0);
+    localStorage.removeItem('name');
+    localStorage.removeItem('email');
+    localStorage.removeItem('phone');
+    localStorage.removeItem('selectedProducts');
   };
 
   return (
@@ -130,6 +170,11 @@ function App() {
         <Grid item xs={12}>
           <Button variant="contained" color="primary" fullWidth startIcon={<FileDownload />} onClick={handleSubmit}>
             Generate Invoice
+          </Button>
+        </Grid>
+        <Grid item xs={12}>
+          <Button variant="contained" color="warning" fullWidth startIcon={<Clear />} onClick={handleClearForm}>
+            Clear Form
           </Button>
         </Grid>
       </Grid>
