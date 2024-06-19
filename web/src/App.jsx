@@ -130,7 +130,7 @@ function App() {
                     <Grid item xs={9}>
                       <Autocomplete
                         options={products}
-                        getOptionLabel={option => `${option.name} ($${option.price})`}
+                        getOptionLabel={option => `${option.name} (${option.package}) ($${option.price})`}
                         value={products.find(p => p.name === product.name) || null}
                         onChange={(_, newValue) => handleProductChange(index, newValue)}
                         renderInput={params => <TextField {...params} fullWidth />}
