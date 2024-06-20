@@ -6,7 +6,6 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	_ "github.com/lib/pq"
-	"github.com/rs/xid"
 )
 
 const (
@@ -17,18 +16,6 @@ const (
 		price INTEGER NOT NULL,
 		retail INTEGER NOT NULL
 	);`
-
-	INVOICES_TBL = `CREATE TABLE IF NOT EXISTS invoices (
-		id TEXT PRIMARY KEY,
-		name TEXT NOT NULL,
-		email TEXT NOT NULL,
-		phone TEXT NOT NULL
-	)`
-
-	INVOICE_PRODUCTS_TBL = `CREATE TABLE IF NOT EXISTS invoice_products (
-		invoice_id TEXT REFERENCES invoices(id),
-		product_name TEXT REFERENCES products(name)
-	)`
 )
 
 type Store struct {
@@ -44,14 +31,6 @@ func newStore(dsn string) (*Store, error) {
 
 	if _, err := db.Exec(PRODUCTS_TBL); err != nil {
 		return nil, fmt.Errorf("error creating products table: %w", err)
-	}
-
-	if _, err := db.Exec(INVOICES_TBL); err != nil {
-		return nil, fmt.Errorf("error creating invoices table: %w", err)
-	}
-
-	if _, err := db.Exec(INVOICE_PRODUCTS_TBL); err != nil {
-		return nil, fmt.Errorf("error creating invoice_products table: %w", err)
 	}
 
 	cache := sq.NewStmtCache(db)
@@ -93,47 +72,4 @@ func (s Store) listProducts() ([]Product, error) {
 	}
 
 	return products, nil
-}
-
-type createInvoiceIn struct {
-	Invoice
-	Products []struct {
-		Name     string
-		Quantity int
-	}
-}
-
-func (s Store) createInvoice(in createInvoiceIn) error {
-	tx, err := s.db.Begin()
-	if err != nil {
-		return fmt.Errorf("error starting transaction: %w", err)
-	}
-
-	in.Invoice.ID = xid.New().String()
-	stmt := sq.Insert("invoices").SetMap(in.Invoice.Map())
-	q, args, err := stmt.ToSql()
-	if err != nil {
-		return fmt.Errorf("error building invoice insertion query: %w", err)
-	}
-
-	if _, err := tx.Exec(q, args...); err != nil {
-		tx.Rollback()
-		return fmt.Errorf("error executing invoice insertion query: %w", err)
-	}
-
-	for _, p := range in.Products {
-		for range p.Quantity {
-			stmt = sq.Insert("invoice_products").SetMap(map[string]any{"invoice_id": in.Invoice.ID, "product_id": p.Name})
-			q, args, err = stmt.ToSql()
-			if err != nil {
-				return fmt.Errorf("error building invoice_product insertion query: %w", err)
-			}
-		}
-	}
-
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("error committing transaction: %w", err)
-	}
-
-	return nil
 }

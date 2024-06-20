@@ -4,7 +4,7 @@ import { Add, Delete, FileDownload, Clear } from '@mui/icons-material';
 
 function App() {
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
   const [products, setProducts] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
@@ -13,12 +13,12 @@ function App() {
   // Load data from localStorage
   useEffect(() => {
     const storedName = localStorage.getItem('name');
-    const storedEmail = localStorage.getItem('email');
+    const storedAddress = localStorage.getItem('address');
     const storedPhone = localStorage.getItem('phone');
     const storedSelectedProducts = localStorage.getItem('selectedProducts');
 
     if (storedName) setName(storedName);
-    if (storedEmail) setEmail(storedEmail);
+    if (storedAddress) setAddress(storedAddress);
     if (storedPhone) setPhone(storedPhone);
     if (storedSelectedProducts) setSelectedProducts(JSON.parse(storedSelectedProducts) || []);
   }, []);
@@ -46,10 +46,10 @@ function App() {
   // Persist data to localStorage
   useEffect(() => {
     localStorage.setItem('name', name);
-    localStorage.setItem('email', email);
+    localStorage.setItem('address', address);
     localStorage.setItem('phone', phone);
     localStorage.setItem('selectedProducts', JSON.stringify(selectedProducts));
-  }, [name, email, phone, selectedProducts]);
+  }, [name, address, phone, selectedProducts]);
 
   const handleAddProduct = () => {
     setSelectedProducts([...selectedProducts, { name: '', quantity: 1 }]);
@@ -72,7 +72,7 @@ function App() {
   const handleSubmit = () => {
     const invoiceData = {
       name,
-      email,
+      address: address,
       phone,
       products: selectedProducts.map(p => ({ name: p.name, quantity: p.quantity })),
     };
@@ -88,7 +88,7 @@ function App() {
         const url = window.URL.createObjectURL(new Blob([blob]));
         const link = document.createElement('a');
         link.href = url;
-        link.setAttribute('download', 'invoice.pdf');
+        link.setAttribute('download', name + '.pdf');
         document.body.appendChild(link);
         link.click();
       })
@@ -97,12 +97,12 @@ function App() {
 
   const handleClearForm = () => {
     setName('');
-    setEmail('');
+    setAddress('');
     setPhone('');
     setSelectedProducts([]);
     setTotalCost(0);
     localStorage.removeItem('name');
-    localStorage.removeItem('email');
+    localStorage.removeItem('address');
     localStorage.removeItem('phone');
     localStorage.removeItem('selectedProducts');
   };
@@ -114,7 +114,7 @@ function App() {
           <TextField label="Name" fullWidth margin="normal" value={name} onChange={e => setName(e.target.value)} />
         </Grid>
         <Grid item xs={6}>
-          <TextField label="Email" fullWidth margin="normal" value={email} onChange={e => setEmail(e.target.value)} />
+          <TextField label="Address" fullWidth margin="normal" value={address} onChange={e => setAddress(e.target.value)} />
         </Grid>
         <Grid item xs={6}>
           <TextField label="Phone" fullWidth margin="normal" value={phone} onChange={e => setPhone(e.target.value)} />

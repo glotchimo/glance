@@ -27,6 +27,7 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 
 COPY --from=backend-builder /go-app ./
+COPY --from=backend-builder /app/logo.png ./logo.png
 COPY --from=backend-builder /app/web/dist ./web/dist
 
 EXPOSE 8080

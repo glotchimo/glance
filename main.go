@@ -53,11 +53,20 @@ func handleListProducts(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(products)
 }
 
-func handleCreateInvoice(w http.ResponseWriter, r *http.Request) {
+func handleGenerateInvoice(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s %s %s", r.Method, r.URL.Path, r.RemoteAddr)
 
-	var in createInvoiceIn
+	type input struct {
+		Invoice
+		Products []struct {
+			Name     string
+			Quantity int
+		}
+	}
+
+	var in input
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+		log.Print(err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -86,7 +95,7 @@ func handleCreateInvoice(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	http.HandleFunc("/products", handleListProducts)
-	http.HandleFunc("/invoices", handleCreateInvoice)
+	http.HandleFunc("/invoices", handleGenerateInvoice)
 	http.Handle("/", http.FileServerFS(distFS))
 	http.Handle("/index.html", http.FileServerFS(indexFS))
 
