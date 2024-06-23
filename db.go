@@ -39,6 +39,15 @@ func newStore(dsn string) (*Store, error) {
 	return &store, nil
 }
 
+func (s Store) createProduct(product Product) error {
+	q := s.builder.Insert("products").SetMap(product.Map())
+	if _, err := q.Exec(); err != nil {
+		return fmt.Errorf("error inserting product: %w", err)
+	}
+
+	return nil
+}
+
 func (s Store) getProduct(name string) (Product, error) {
 	var product Product
 
@@ -51,7 +60,7 @@ func (s Store) getProduct(name string) (Product, error) {
 }
 
 func (s Store) listProducts() ([]Product, error) {
-	q := s.builder.Select("name", "category", "package", "price", "retail").From("products")
+	q := s.builder.Select("name", "category", "package", "price", "retail").From("products").OrderBy("name ASC")
 	rows, err := q.Query()
 	if err != nil {
 		return nil, fmt.Errorf("error getting products: %w", err)
@@ -72,4 +81,22 @@ func (s Store) listProducts() ([]Product, error) {
 	}
 
 	return products, nil
+}
+
+func (s Store) updateProduct(name string, updates map[string]any) error {
+	q := s.builder.Update("products").SetMap(updates).Where(sq.Eq{"name": name})
+	if _, err := q.Exec(); err != nil {
+		return fmt.Errorf("error updating product: %w", err)
+	}
+
+	return nil
+}
+
+func (s Store) deleteProduct(name string) error {
+	q := s.builder.Delete("products").Where(sq.Eq{"name": name})
+	if _, err := q.Exec(); err != nil {
+		return fmt.Errorf("error deleting product: %w", err)
+	}
+
+	return nil
 }

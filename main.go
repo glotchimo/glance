@@ -39,6 +39,25 @@ func init() {
 	}
 }
 
+func handleCreateProduct(w http.ResponseWriter, r *http.Request) {
+	log.Printf("%s %s %s", r.Method, r.URL.Path, r.RemoteAddr)
+
+	var product Product
+	if err := json.NewDecoder(r.Body).Decode(&product); err != nil {
+		log.Print(err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := store.createProduct(product); err != nil {
+		log.Print(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(201)
+}
+
 func handleListProducts(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s %s %s", r.Method, r.URL.Path, r.RemoteAddr)
 
@@ -51,6 +70,48 @@ func handleListProducts(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(products)
+}
+
+func handleUpdateProduct(w http.ResponseWriter, r *http.Request) {
+	log.Printf("%s %s %s", r.Method, r.URL.Path, r.RemoteAddr)
+
+	name := r.URL.Query().Get("name")
+
+	var updates map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
+		log.Print(err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := store.updateProduct(name, updates); err != nil {
+		log.Print(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(200)
+}
+
+func handleDeleteProduct(w http.ResponseWriter, r *http.Request) {
+	log.Printf("%s %s %s", r.Method, r.URL.Path, r.RemoteAddr)
+
+	name := r.URL.Query().Get("name")
+
+	var updates map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
+		log.Print(err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := store.deleteProduct(name); err != nil {
+		log.Print(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(200)
 }
 
 func handleGenerateInvoice(w http.ResponseWriter, r *http.Request) {
@@ -72,7 +133,7 @@ func handleGenerateInvoice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	invoice := in.Invoice
-	products := []Product{}
+	orderedProducts := []OrderedProduct{}
 	for _, p := range in.Products {
 		product, err := store.getProduct(p.Name)
 		if err != nil {
@@ -81,12 +142,13 @@ func handleGenerateInvoice(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		for range p.Quantity {
-			products = append(products, product)
-		}
+		orderedProducts = append(orderedProducts, OrderedProduct{
+			Product:  product,
+			Quantity: p.Quantity,
+		})
 	}
 
-	if err := invoice.Write(w, products); err != nil {
+	if err := invoice.Write(w, orderedProducts); err != nil {
 		log.Print(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -94,8 +156,11 @@ func handleGenerateInvoice(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/products", handleListProducts)
-	http.HandleFunc("/invoices", handleGenerateInvoice)
+	http.HandleFunc("/api/products/create", handleCreateProduct)
+	http.HandleFunc("/api/products/list", handleListProducts)
+	http.HandleFunc("/api/products/update/:name", handleUpdateProduct)
+	http.HandleFunc("/api/products/delete/:name", handleDeleteProduct)
+	http.HandleFunc("/api/invoices", handleGenerateInvoice)
 	http.Handle("/", http.FileServerFS(distFS))
 	http.Handle("/index.html", http.FileServerFS(indexFS))
 

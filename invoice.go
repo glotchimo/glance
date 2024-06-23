@@ -12,19 +12,16 @@ type Invoice struct {
 	ID      string `json:"id"`
 	Name    string `json:"name"`
 	Address string `json:"address"`
+	Email   string `json:"email"`
 	Phone   string `json:"phone"`
 }
 
-func (i Invoice) Map() map[string]any {
-	return map[string]any{
-		"id":    i.ID,
-		"name":  i.Name,
-		"email": i.Address,
-		"phone": i.Phone,
-	}
+type OrderedProduct struct {
+	Product  Product
+	Quantity int
 }
 
-func (i Invoice) Write(w io.Writer, products []Product) error {
+func (i Invoice) Write(w io.Writer, orderedProducts []OrderedProduct) error {
 	font := "Arial"
 	pdf := fpdf.New("P", "mm", "A4", "")
 	pdf.AddPage()
@@ -56,26 +53,17 @@ func (i Invoice) Write(w io.Writer, products []Product) error {
 	pdf.Cell(40, 10, "Total")
 	pdf.Ln(10)
 
-	// Group products together
-	mapped := make(map[string]Product)
-	quantities := make(map[string]int)
-	for _, product := range products {
-		mapped[product.Name] = product
-		quantities[product.Name]++
-	}
-
 	// Add item rows
 	var total int
 	pdf.SetFont(font, "", 12)
-	for name, product := range mapped {
-		pdf.CellFormat(90, 10, product.Name, "", 0, "L", false, 0, "")
-		pdf.CellFormat(40, 10, fmt.Sprint(quantities[name]), "", 0, "L", false, 0, "")
-		pdf.CellFormat(40, 10, fmt.Sprint(product.Price), "", 0, "L", false, 0, "")
-		pdf.CellFormat(40, 10, fmt.Sprint(quantities[name]*product.Price), "", 0, "L", false, 0, "")
+	for _, op := range orderedProducts {
+		pdf.CellFormat(90, 10, op.Product.Name, "", 0, "L", false, 0, "")
+		pdf.CellFormat(40, 10, fmt.Sprint(op.Quantity), "", 0, "L", false, 0, "")
+		pdf.CellFormat(40, 10, fmt.Sprint(op.Product.Price), "", 0, "L", false, 0, "")
+		pdf.CellFormat(40, 10, fmt.Sprint(op.Quantity*op.Product.Price), "", 0, "L", false, 0, "")
 		pdf.Ln(8)
-		total += quantities[name] * product.Price
+		total += op.Quantity * op.Product.Price
 	}
-	pdf.Ln(2)
 
 	// Add total row
 	pdf.SetFont(font, "B", 12)
@@ -88,6 +76,7 @@ func (i Invoice) Write(w io.Writer, products []Product) error {
 	pdf.SetFont(font, "", 12)
 	pdf.CellFormat(pageWidth, 5, i.Name, "", 1, "L", false, 0, "")
 	pdf.CellFormat(pageWidth, 5, i.Address, "", 1, "L", false, 0, "")
+	pdf.CellFormat(pageWidth, 5, i.Email, "", 1, "L", false, 0, "")
 	pdf.CellFormat(pageWidth, 5, i.Phone, "", 1, "L", false, 0, "")
 	pdf.Ln(5)
 
